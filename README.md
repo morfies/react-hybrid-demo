@@ -1,70 +1,38 @@
-# Getting Started with Create React App
+# ssr demo
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This demo is a forked version of github react-ssr-example.
 
-## Available Scripts
+I am using this to test v18 ssr. V18 has stricter hydration content mis-match checking, for example, you can return an extra `div` from server html to see the error message.
 
-In the project directory, you can run:
+And test other things:
 
-### `npm start`
+- https://gist.github.com/gaearon/e7d97cdf38a2907924ea12e4ebdf3c85
+- Suspense will generate `<!--$-->` comment separator
+- v18 with new APIs has stricter hydration content match checking, can try to add an extra `div` layer from ssr html to see the error.
+- If using v18 still with old v17 APIs, the whole app actually just stays in v17 logic, no v18 features are introduced, including stricter checking or auto-batching etc.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## scripts
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+#### `npm start`
 
-### `npm test`
+This is to start the static dev server for the app.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+#### `npm run build`
 
-### `npm run build`
+This is to build the static app and outputs are stored in `dist/` folder:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- bundle.js: our client side js bundle file, including app code and react as such libraries.
+- index.html: this is the app's entry html with our bundle.js injected
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+> I intentionally bundle with `development` mode to better see error messages for local development.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### `npm run dev`
 
-### `npm run eject`
+This will build our client side code and server side code for this app, and then start the server.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+After this command, you can visit our hybrid app at localhost:3006
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## webpack
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- webpack.config.js is used for csr
+- webpack.server.js is used for ssr
