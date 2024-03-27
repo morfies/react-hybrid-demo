@@ -11,6 +11,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve('public', 'index.html'),
+      publicPath: 'static',
     }),
   ],
   module: {
@@ -26,17 +27,6 @@ module.exports = {
   },
   resolve: {
     extensions: ['.js', '.jsx'],
-    alias: {
-      // react$: path.resolve(
-      //   __dirname,
-      //   'node_modules/react/cjs/react.development.js'
-      // ),
-      // 'react-dom$': path.resolve(
-      //   __dirname,
-      //   'node_modules/react-dom/cjs/react-dom.development.js'
-      // ),
-      // User$: path.resolve(__dirname, 'src/User.js'),
-    },
   },
   devServer: {
     static: {

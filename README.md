@@ -10,6 +10,8 @@ And test other things:
 - Suspense will generate `<!--$-->` comment separator
 - v18 with new APIs has stricter hydration content match checking, can try to add an extra `div` layer from ssr html to see the error.
 - If using v18 still with old v17 APIs, the whole app actually just stays in v17 logic, no v18 features are introduced, including stricter checking or auto-batching etc.
+- CSR is v18 based and build the dist first, then we switch server to v17 and then build server only, then we start the server. This way we test if hydration compatable between versions.
+  - v17 domServer doesn't support `Suspense`
 
 ## scripts
 
@@ -32,7 +34,42 @@ This will build our client side code and server side code for this app, and then
 
 After this command, you can visit our hybrid app at localhost:3006
 
+#### `npm run dev:build-server`
+
+This is to build server code into `server-build/index.js`,
+then we can run `npm run dev:start-server` to start the express server locally to serve ssr html.
+
+The served html is from `./dist/index.html`, which has our client-side `bundle.js` injected already. So after been loaded, client-side bundle will do the hydration upon calling `hydrateRoot`.
+
 ## webpack
 
 - webpack.config.js is used for csr
 - webpack.server.js is used for ssr
+
+## Improvement
+
+### Basic
+
+In the server, we use `ReactDOMServer.renderToString` to render our app to html and return.
+
+This way has a few pitfalls:
+
+- Server only returns when the whole app finishes rendering, namely slow data fetching if any in parts of the app can slow the whole process down.
+- Client side needs the whole app's bundle.js to do hydration, namely before becoming interactive, a large bundle.js file needs to be downloaded and loaded.
+
+We can try to improve this by using v18 streaming and Suspense.
+
+### Advanced
+
+(https://github.com/reactwg/react-18/discussions/37)
+
+Things we want to add:
+
+- Add more components with `Suspense` or `lazy`
+  - Selective Hydration
+- Use react-query for data-fetching
+- Test if initial bundle is splited
+- Test if Suspense is streamed partially as expected and check the partial returned data(with js to hydrate this part of UI? From the doc, this is no, client js bundles can be splited by `lazy`)
+- Test when Suspense failed ssr, how does csr kick in?
+- Use `renderToPipableStream` api
+- If a hydration content mis-match error happens, the app will fallback to csr, meaning in this case, the whole csr bundle.js will take control and generate the DOM and event handlers totally.(The server can return absolutely different html than the client to test)

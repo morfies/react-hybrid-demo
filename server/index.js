@@ -5,14 +5,20 @@ import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import express from 'express';
 
-import App from '../src/App';
+import ServerEntry from '../src/ServerEntry';
 
 const PORT = process.env.PORT || 3006;
 const app = express();
 
-app.get('/', async (req, res) => {
-  const app = ReactDOMServer.renderToString(<App />);
-  console.log('ssr html', app);
+// bundle.js
+app.use('/static', express.static('./dist'));
+
+app.get('*', async (req, res) => {
+  const url = req.originalUrl;
+  console.log('========url', url);
+  const app = ReactDOMServer.renderToString(<ServerEntry url={url} />);
+
+  console.log('ssr html >>>>', app);
   // index.html is bundled with csr js and react libs
   const indexFile = path.resolve('./dist/index.html');
 
@@ -31,8 +37,6 @@ app.get('/', async (req, res) => {
     );
   });
 });
-
-app.use(express.static('./dist'));
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
