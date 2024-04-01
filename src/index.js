@@ -2,17 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 // import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
+import Shell from './components/Shell';
 import App from './App';
 
 console.log('hello from csr');
 // hybrid
 ReactDOM.hydrateRoot(
-  document.getElementById('root'),
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
+  document,
+  <Shell>
+    <React.StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </React.StrictMode>
+  </Shell>
 );
 
 // csr

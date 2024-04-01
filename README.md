@@ -83,3 +83,7 @@ for example, if you start the csr `npm start` and visit `http://localhost:3000/a
 This is because the server has no such path `/article` only `/` which serves `index.html` file. We are only using `BrowserRouter`, meaning all the routers are client-side routing.
 
 SPA works with hash routes, meaning the server always receives `/` path, leaving the client js to resolve the hash part and then render the correct page compoment.
+
+## MPA
+
+During the testing process, after I switched to `renderToPipeableStream` with hybrid mode, I found that even if I killed the server, che client pages can work normally as if an SPA, whithout requesting the server anymore(no api involved).
