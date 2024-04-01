@@ -73,3 +73,13 @@ Things we want to add:
 - Test when Suspense failed ssr, how does csr kick in?
 - Use `renderToPipableStream` api
 - If a hydration content mis-match error happens, the app will fallback to csr, meaning in this case, the whole csr bundle.js will take control and generate the DOM and event handlers totally.(The server can return absolutely different html than the client to test)
+
+# Take aways
+
+## URLs(traditional vs hash)
+
+You can see that multi-page apps(traditional urls) are usually achieved with hybrid mode,
+for example, if you start the csr `npm start` and visit `http://localhost:3000/article` directly, you will encounter with page not found error.
+This is because the server has no such path `/article` only `/` which serves `index.html` file. We are only using `BrowserRouter`, meaning all the routers are client-side routing.
+
+SPA works with hash routes, meaning the server always receives `/` path, leaving the client js to resolve the hash part and then render the correct page compoment.

@@ -1,5 +1,4 @@
 import React from 'react';
-// import ReactDOM from 'react-dom';
 import { StaticRouter } from 'react-router-dom/server';
 import App from './App';
 

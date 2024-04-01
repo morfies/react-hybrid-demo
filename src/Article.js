@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { getUser } from './api';
+import Sunrise from './components/Sunrise';
+
 function Article() {
   return (
     <div style={{ border: '1px dashed gray' }}>
-      <p>This is an article page</p>
+      <h1>This is an article page</h1>
+      <Sunrise />
     </div>
   );
 }
