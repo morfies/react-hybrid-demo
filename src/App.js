@@ -3,21 +3,33 @@ import { Routes, Route, Outlet, Link } from 'react-router-dom';
 import Home from './Home';
 import User from './User';
 import Article from './Article';
+import Loading from './components/Loading';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 0,
+    },
+  },
+});
 function App() {
   return (
     <div className='App'>
-      <Routes>
-        <Route path='/' element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path='user' element={<User />} />
-          <Route path='article' element={<Article />} />
+      <QueryClientProvider client={queryClient}>
+        <Routes>
+          <Route path='/' element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path='user' element={<User />} />
+            <Route path='article' element={<Article />} />
 
-          {/* Using path="*"" means "match anything", so this route
+            {/* Using path="*"" means "match anything", so this route
                 acts like a catch-all for URLs that we don't have explicit
                 routes for. */}
-          <Route path='*' element={<NoMatch />} />
-        </Route>
-      </Routes>
+            <Route path='*' element={<NoMatch />} />
+          </Route>
+        </Routes>
+      </QueryClientProvider>
     </div>
   );
 }
@@ -51,7 +63,9 @@ function Layout() {
       {/* An <Outlet> renders whatever child route is currently active,
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
-      <Outlet />
+      <React.Suspense fallback={<Loading />}>
+        <Outlet />
+      </React.Suspense>
     </div>
   );
 }

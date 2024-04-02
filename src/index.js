@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import Shell from './components/Shell';
 import App from './App';
 
-console.log('hello from csr');
+console.log('hello from client bundle js');
 // hybrid
 ReactDOM.hydrateRoot(
   document,
