@@ -1,34 +1,39 @@
-import React from 'react';
+import * as React from 'react';
 import { Routes, Route, Outlet, Link } from 'react-router-dom';
 import Home from './Home';
 import User from './User';
 import Article from './Article';
 import Loading from './components/Loading';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryStreamedHydration } from './components/ReactQueryStreamedHydration';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 0,
-    },
-  },
-});
 function App() {
+  // Instead do this, which ensures each request has its own cache:
+  const [queryClient] = React.useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // With SSR, we usually want to set some default staleTime
+            // above 0 to avoid refetching immediately on the client
+            staleTime: Infinity,
+          },
+        },
+      })
+  );
   return (
     <div className='App'>
       <QueryClientProvider client={queryClient}>
-        <Routes>
-          <Route path='/' element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path='user' element={<User />} />
-            <Route path='article' element={<Article />} />
-
-            {/* Using path="*"" means "match anything", so this route
-                acts like a catch-all for URLs that we don't have explicit
-                routes for. */}
-            <Route path='*' element={<NoMatch />} />
-          </Route>
-        </Routes>
+        <ReactQueryStreamedHydration>
+          <Routes>
+            <Route path='/' element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path='user' element={<User />} />
+              <Route path='article' element={<Article />} />
+              <Route path='*' element={<NoMatch />} />
+            </Route>
+          </Routes>
+        </ReactQueryStreamedHydration>
       </QueryClientProvider>
     </div>
   );
@@ -63,7 +68,7 @@ function Layout() {
       {/* An <Outlet> renders whatever child route is currently active,
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
-      <React.Suspense fallback={<Loading />}>
+      <React.Suspense fallback={<Loading color='yellow' />}>
         <Outlet />
       </React.Suspense>
     </div>

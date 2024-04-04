@@ -2,7 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   mode: 'development',
-  entry: './src/index.js', // Entry point of your application
+  entry: './src/index.tsx', // Entry point of your application
   output: {
     filename: 'static/bundle.js', // Output bundle file name
     path: path.resolve(__dirname, 'dist'), // Output directory
@@ -18,10 +18,15 @@ module.exports = {
           loader: 'babel-loader',
         },
       },
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
     ],
   },
   resolve: {
-    extensions: ['.js', '.jsx'],
+    extensions: ['.tsx', '.ts', '.js', '.jsx'],
   },
   devServer: {
     port: 3000, // Port for the development server

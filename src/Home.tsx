@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import * as React from 'react';
 function Home() {
   return (
     <div style={{ border: '1px dashed gray' }}>

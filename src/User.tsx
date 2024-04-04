@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useEffect, useState, Suspense } from 'react';
 import { getUser } from './api';
 import Loading from './components/Loading';
@@ -16,7 +17,7 @@ function User() {
   return (
     <div style={{ border: '1px dashed gray' }}>
       <p>This is a profile of some user</p>
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<Loading color='purple' />}>
         <div>
           <p>
             <span>Name:</span>
