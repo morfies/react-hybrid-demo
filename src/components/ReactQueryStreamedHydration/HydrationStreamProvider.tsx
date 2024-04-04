@@ -83,6 +83,7 @@ export function createHydrationStreamProvider<TShape>() {
      */
     onFlush?: () => Array<TShape>;
   }) {
+    console.log('UseClientHydrationStreamProvider render');
     // unique id for the cache provider
     const id = `__RQ${React.useId()}`;
     const idJSON = htmlEscapeJsonString(JSON.stringify(id));
@@ -109,7 +110,7 @@ export function createHydrationStreamProvider<TShape>() {
     });
     const count = React.useRef(0);
     useServerInsertedHTML(() => {
-      // This only happens on the server
+      // This only happens on the server, controlled in useServerInsertedHTML
       stream.push(...(props.onFlush?.() ?? []));
 
       if (!stream.length) {
@@ -163,6 +164,7 @@ export function createHydrationStreamProvider<TShape>() {
 
         win[id] = {
           initialized: true,
+          // push is critical here, it ensure onEntries is sure to be called once a <script> of hydrated data loads on the page(streamed by server once a suspense resolves)
           push: onEntries,
         };
       }

@@ -60,6 +60,7 @@ export function ReactQueryStreamedHydration(props: {
       // Happens on server:
       // so this returns a dehydratedState, which will be used on client
       onFlush={() => {
+        console.log('onFlush called');
         /**
          * Dehydrated state of the client where we only include the queries that were added/updated since the last flush
          */
@@ -77,6 +78,9 @@ export function ReactQueryStreamedHydration(props: {
             return trackedKeys.has(query.queryHash) && shouldDehydrate(query);
           },
         });
+
+        console.log('trackedKeys:', trackedKeys);
+        console.log('dehydratedState:', dehydratedState);
         trackedKeys.clear();
 
         if (!dehydratedState.queries.length) {
@@ -87,6 +91,7 @@ export function ReactQueryStreamedHydration(props: {
       }}
       // Happens in browser: we hydrate the states from server above
       onEntries={(entries) => {
+        console.log('onEntries called');
         for (const hydratedState of entries) {
           // hydrate adds a previously dehydrated state into a cache. so that reqct-query itself knows some apis are already been called on the server thus client will skip calling again
           hydrate(queryClient, hydratedState, props.options?.hydrate);

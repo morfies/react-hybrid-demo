@@ -20,6 +20,8 @@ export function StreamableContext({
   const [useServerInsertedHTML] = useState(() => {
     // we intercept the original reactStream(without data) and inject our resolved data to new stream
     reactStream.on('data', (buffer) => {
+      // console.log('callbacks.size:', callbacks.size);
+      // actually we only registered one callback, namely where useServerInsertedHTML is used in ReactQueryStreamedHydration
       callbacks.forEach((fn) => {
         // scriptElement is the jsx element returned by useServerInsertedHTML callback inside ReactQueryStreamedHydration
         const scriptElement = fn();
@@ -48,5 +50,6 @@ export function StreamableContext({
 export function useServerInsertedHTML(fn: () => React.ReactElement) {
   if (!isServer) return;
   // server side
+  console.log('useServerInsertedHTML called');
   return useContext(Context).useServerInsertedHTML(fn);
 }
