@@ -557,4 +557,4 @@ The SDK exports two HoC components:
 - `ReactQueryStreamedHydration`
   > This is used to wrap our `App` and listen on `queryClient` to track all the queries happened in our Suspense boundaries, `dehydrate` the data on the server and then `hydrate` the data on the client, this way the client SDK gets to know the data has been called already.
 
-Waht all the Providers and components are doing here mainly are binding event listeners to be triggered by server data stream(which caused by react suspense streaming), then by client onload.
+What all the Providers and components are doing here mainly are binding event listeners to be triggered by server data stream(which caused by react suspense streaming), then by client onload. All about closures.

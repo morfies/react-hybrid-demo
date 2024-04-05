@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Suspense } from 'react';
-import Sunrise from './components/Sunrise';
+// import Sunrise from './components/Sunrise';
 import Loading from './components/Loading';
 
+const Sunrise = React.lazy(() => import('./components/Sunrise'));
 function Article() {
   return (
     <div style={{ border: '1px dashed gray' }}>
