@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense } from 'react';
+const FoxPopup = React.lazy(() => import('./Popup'));
 
 // Asia/Shanghai or America/Sao_Paulo
 const API =
@@ -14,6 +15,8 @@ function Sunrise({
   sleepsec: number;
   location: string;
 }) {
+  const [show, setShow] = React.useState(false);
+
   // data is guaranteed to be defined by Suspense boundary
   const { data } = useSuspenseQuery({
     // this is a cache key, if any unique parameters, pass in
@@ -40,6 +43,17 @@ function Sunrise({
       >
         <p>The sun rises at {data.sunrise}</p>
         <p>And sets at {data.sunset}</p>
+        {/* click this button to see selective hydration(priority) in action*/}
+        <button
+          onClick={() => {
+            setShow(true);
+          }}
+        >
+          Click a fox(selective hydration)
+        </button>
+        <Suspense>
+          <FoxPopup show={show} />
+        </Suspense>
       </Suspense>
     </div>
   );
