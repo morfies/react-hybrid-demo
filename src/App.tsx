@@ -5,7 +5,6 @@ import User from './User';
 import Article from './Article';
 import Loading from './components/Loading';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryStreamedHydration } from './components/ReactQueryStreamedHydration';
 
 function App() {
   // Instead do this, which ensures each request has its own cache:
@@ -24,16 +23,14 @@ function App() {
   return (
     <div className='App'>
       <QueryClientProvider client={queryClient}>
-        <ReactQueryStreamedHydration>
-          <Routes>
-            <Route path='/' element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path='user' element={<User />} />
-              <Route path='article' element={<Article />} />
-              <Route path='*' element={<NoMatch />} />
-            </Route>
-          </Routes>
-        </ReactQueryStreamedHydration>
+        <Routes>
+          <Route path='/' element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path='user' element={<User />} />
+            <Route path='article' element={<Article />} />
+            <Route path='*' element={<NoMatch />} />
+          </Route>
+        </Routes>
       </QueryClientProvider>
     </div>
   );

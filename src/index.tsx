@@ -2,20 +2,17 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 // import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
-import Shell from './components/Shell';
 import App from './App';
 
 console.log('hello from client bundle js');
 // hybrid
 ReactDOM.hydrateRoot(
-  document,
-  <Shell>
-    <React.StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </React.StrictMode>
-  </Shell>
+  document.getElementById('root'),
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
 );
 
 // csr

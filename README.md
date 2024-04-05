@@ -1,17 +1,19 @@
 # ssr demo
 
-This demo is a forked version of github react-ssr-example.
+The original demo starts from a forked version of github react-ssr-example.
 
-I am using this to test v18 ssr. V18 has stricter hydration content mis-match checking, for example, you can return an extra `div` from server html to see the error message.
+I am using this to test v18 ssr. V18 has stricter hydration content mis-match checking, for example, you can return an extra `div` from server html to see the error message. With a single mismatch error, react will fallback to csr instead.
 
-And test other things:
+Along the way, I am trying to test things out:
 
 - https://gist.github.com/gaearon/e7d97cdf38a2907924ea12e4ebdf3c85
-- Suspense will generate `<!--$-->` comment separator
-- v18 with new APIs has stricter hydration content match checking, can try to add an extra `div` layer from ssr html to see the error.
+- Suspense will generate `<!--$-->` comment separator, if you are building your own render service such as `tree-walker` and want to compatible with v18, these need to pay attention.
+- v18 with new APIs has stricter hydration content match checking
 - If using v18 still with old v17 APIs, the whole app actually just stays in v17 logic, no v18 features are introduced, including stricter checking or auto-batching etc.
 - CSR is v18 based and build the dist first, then we switch server to v17 and then build server only, then we start the server. This way we test if hydration compatable between versions.
   - v17 domServer doesn't support `Suspense`
+  - `renderToString` doesn't support Suspense boundary
+  - todo
 
 ## scripts
 
@@ -50,27 +52,56 @@ The served html is from `./dist/index.html`, which has our client-side `bundle.j
 - Finally run `npm run dev:start-server` to start our server
 - Visit `localhost:3006/` to see our hybrid application
 
-## webpack
+## Webpack config
+
+For simplicity, I only configured to support typescript and tsx. The reason to split into two config files is to generate different dist for server and client.
 
 - webpack.config.js is used for csr
 - webpack.server.js is used for ssr
 
-## Improvement
+## Applications
 
-### Basic
+The SSR here we talk about are not actually pure SSR, it's hybrid mode, namely we also involve the client hydration phase and thus our application is fully interactive.
+
+### Shared Setup
+
+- `ServerEntry.tsx` is our react app entry for the server side
+- `index.tsx` is our react app entry for the client side
+
+The main difference is we need to use different routers from react-router-dom for client and server.
+
+### Basic SSR with `renderToString`
+
+> Branch `rendertostring`
+
+Setup:
+
+- Client is using `BrowserRouter` to support MPA like urls, while server is suing `StaticRouter` which will help to render the correct `path` with current `url` requested.
+- In `index.tsx`, we are calling `hydrateRoot` to start our app in hybrid mode.
+- Client build will generate:
+  - `dist/bundle.js` the client js bundle, which is injected into template in `index.html`
+  - `dist/index.html` the entry document that our server will return, with `bundle.js` injected
+- Server build will generate:
+  - `server-build/index.js` this is a js file that includes our express server and request handlers, basically it accepts two kinds of request:
+    - static accsets, such as `/static/bundle.js` to request the js file for client hydration
+    - document requests, this will return our `index.html` file content, namely ssr generated content
 
 In the server, we use `ReactDOMServer.renderToString` to render our app to html and return.
 
-This way has a few pitfalls:
+**This way has a few pitfalls:**
 
 - Server only returns when the whole app finishes rendering, namely slow data fetching if any in parts of the app can slow the whole process down.
 - Client side needs the whole app's bundle.js to do hydration, namely before becoming interactive, a large bundle.js file needs to be downloaded and loaded.
+- Also `renderToString` doesn't support Suspense boundary in the server, namely concurrent rendering is not enabled. If we check the returned html from server we can see that the Suspense boundaries are not rendered correctly. Visit `/article` page and see the error in action.
+  > Uncaught Error: The server did not finish this Suspense boundary: The server used "renderToString" which does not support Suspense. If you intended for this Suspense boundary to render the fallback content on the server consider throwing an Error somewhere within the Suspense boundary. If you intended to have the server wait for the suspended component please switch to "renderToPipeableStream" which supports Suspense on the server
+
+**In this basic version**, we get a simple understanding of react ssr/hybrid: The server needs to return the same html as the client's initial rendering, otherwise mismatch error will throw. Client hydration is acomplished by server html inject the `bundle.js` of our whole react app, upon loading of the js, hydration will happen in the client, only after this process, our application will become hydrated and interactive.
 
 We can try to improve this by using v18 streaming and Suspense.
 
-> Streaming: In HTTP streaming, data is sent as a continuous stream, allowing the client to start processing data as soon as it is received, without waiting for the entire payload to be transferred. This enables low-latency delivery and real-time interaction.
+> Streaming: In HTTP streaming, data is sent as a continuous stream, allowing the client to start processing data as soon as it is received, without waiting for the entire react application to be transferred. This enables low-latency delivery and real-time interaction.
 
-### Advanced
+### Advanced SSR with `renderToPipeableStream`
 
 (https://github.com/reactwg/react-18/discussions/37)
 
