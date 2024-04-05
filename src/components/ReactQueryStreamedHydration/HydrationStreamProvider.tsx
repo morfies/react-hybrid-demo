@@ -127,9 +127,11 @@ export function createHydrationStreamProvider<TShape>() {
       stream.length = 0;
 
       const html: Array<string> = [
+        'console.log("a new chunk of script being loading");',
         `window[${idJSON}] = window[${idJSON}] || [];`,
         `window[${idJSON}].push(${htmlEscapeJsonString(serializedCacheArgs)});`,
       ];
+      // this script will be loaded and executed once streamed to client, thus trigger the hijacked `push`, which will trigger `onEntries`
       return (
         <script
           key={count.current++}

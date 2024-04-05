@@ -474,6 +474,53 @@ We are using `@tanstack/react-query@5.28.14`(support suspense) as our fetch SDK,
 The SDK exports two HoC components:
 
 - `StreamableContext`
-  > This is used to wrap our root server component and process(hijack) the stream data returned by `renderToPipeableStream` and inject with server data hydrated into final html schema
+
+  > This is used to wrap our root serverEntry component and intercept the stream data returned by `renderToPipeableStream` and inject with server data hydrated into final html schema(wrapped in a `script` tag).
+  > This is done by `useServerInsertedHTML`, we use it to register a callback which will call `onFlush` once a chunk is streamed and return the dehyrated schema(script tag with `window[id].push(data)`), the `onFlush` will in turn dehyrate our react-query data and return `dehydratedState`
+
+  ```js
+  <script>
+  window['__RQ:R2:'] = window['__RQ:R2:'] || [];
+  window['__RQ:R2:'].push({
+    mutations: [],
+    queries: [
+      {
+        state: {
+          data: {
+            sunrise: '5:43:23 AM',
+            sunset: '6:21:11 PM',
+            solar_noon: '12:02:17 PM',
+            day_length: '12:37:48',
+            civil_twilight_begin: '5:20:25 AM',
+            civil_twilight_end: '6:44:10 PM',
+            nautical_twilight_begin: '4:51:57 AM',
+            nautical_twilight_end: '7:12:37 PM',
+            astronomical_twilight_begin: '4:23:00 AM',
+            astronomical_twilight_end: '7:41:35 PM',
+          },
+          dataUpdateCount: 1,
+          dataUpdatedAt: 1712217443729,
+          error: null,
+          errorUpdateCount: 0,
+          errorUpdatedAt: 0,
+          fetchFailureCount: 0,
+          fetchFailureReason: null,
+          fetchMeta: null,
+          isInvalidated: false,
+          status: 'success',
+          fetchStatus: 'idle',
+        },
+        queryKey: ['sun-data', 5, 'Asia/Shanghai'],
+        queryHash: '["sun-data",5,"Asia/Shanghai"]',
+      },
+    ],
+  });
+  </script>
+  ```
+
+  > Once the `dehydratedState` data is streamed to client, the script will be loaded and trigger the hijacked `push` function, which will then call `onEntries`, which will then `hydrate` the queryClient on client side.
+
 - `ReactQueryStreamedHydration`
   > This is used to wrap our `App` and listen on `queryClient` to track all the queries happened in our Suspense boundaries, `dehydrate` the data on the server and then `hydrate` the data on the client, this way the client SDK gets to know the data has been called already.
+
+Waht all the Providers and components are doing here mainly are binding event listeners to be triggered by server data stream(which caused by react suspense streaming), then by client onload.
