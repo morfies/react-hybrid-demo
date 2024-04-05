@@ -1,17 +1,19 @@
 # ssr demo
 
-This demo is a forked version of github react-ssr-example.
+The original demo starts from a forked version of github react-ssr-example.
 
-I am using this to test v18 ssr. V18 has stricter hydration content mis-match checking, for example, you can return an extra `div` from server html to see the error message.
+I am using this to test v18 ssr. V18 has stricter hydration content mis-match checking, for example, you can return an extra `div` from server html to see the error message. With a single mismatch error, react will fallback to csr instead.
 
-And test other things:
+Along the way, I am trying to test things out:
 
 - https://gist.github.com/gaearon/e7d97cdf38a2907924ea12e4ebdf3c85
-- Suspense will generate `<!--$-->` comment separator
-- v18 with new APIs has stricter hydration content match checking, can try to add an extra `div` layer from ssr html to see the error.
+- Suspense will generate `<!--$-->` comment separator, if you are building your own render service such as `tree-walker` and want to compatible with v18, these need to pay attention.
+- v18 with new APIs has stricter hydration content match checking
 - If using v18 still with old v17 APIs, the whole app actually just stays in v17 logic, no v18 features are introduced, including stricter checking or auto-batching etc.
 - CSR is v18 based and build the dist first, then we switch server to v17 and then build server only, then we start the server. This way we test if hydration compatable between versions.
   - v17 domServer doesn't support `Suspense`
+  - `renderToString` doesn't support Suspense boundary
+  - todo
 
 ## scripts
 
@@ -50,151 +52,65 @@ The served html is from `./dist/index.html`, which has our client-side `bundle.j
 - Finally run `npm run dev:start-server` to start our server
 - Visit `localhost:3006/` to see our hybrid application
 
-## webpack
+## Webpack config
+
+For simplicity, I only configured to support typescript and tsx. The reason to split into two config files is to generate different dist for server and client.
 
 - webpack.config.js is used for csr
 - webpack.server.js is used for ssr
 
-## Improvement
+## Applications
 
-### Basic
+The SSR here we talk about are not actually pure SSR, it's hybrid mode, namely we also involve the client hydration phase and thus our application is fully interactive.
+
+### Shared Setup
+
+- `ServerEntry.tsx` is our react app entry for the server side
+- `index.tsx` is our react app entry for the client side
+
+The main difference is we need to use different routers from react-router-dom for client and server.
+
+### Basic SSR with `renderToString`
+
+> Branch `rendertostring`
+
+Setup:
+
+- Client is using `BrowserRouter` to support MPA like urls, while server is suing `StaticRouter` which will help to render the correct `path` with current `url` requested.
+- In `index.tsx`, we are calling `hydrateRoot` to start our app in hybrid mode.
+- Client build will generate:
+  - `dist/bundle.js` the client js bundle, which is injected into template in `index.html`
+  - `dist/index.html` the entry document that our server will return, with `bundle.js` injected
+- Server build will generate:
+  - `server-build/index.js` this is a js file that includes our express server and request handlers, basically it accepts two kinds of request:
+    - static accsets, such as `/static/bundle.js` to request the js file for client hydration
+    - document requests, this will return our `index.html` file content, namely ssr generated content
 
 In the server, we use `ReactDOMServer.renderToString` to render our app to html and return.
 
-This way has a few pitfalls:
+**This way has a few pitfalls:**
 
 - Server only returns when the whole app finishes rendering, namely slow data fetching if any in parts of the app can slow the whole process down.
 - Client side needs the whole app's bundle.js to do hydration, namely before becoming interactive, a large bundle.js file needs to be downloaded and loaded.
+- Also `renderToString` doesn't support Suspense boundary in the server, namely concurrent rendering is not enabled. If we check the returned html from server we can see that the Suspense boundaries are not rendered correctly. Visit `/article` page and see the error in action.
+  > Uncaught Error: The server did not finish this Suspense boundary: The server used "renderToString" which does not support Suspense. If you intended for this Suspense boundary to render the fallback content on the server consider throwing an Error somewhere within the Suspense boundary. If you intended to have the server wait for the suspended component please switch to "renderToPipeableStream" which supports Suspense on the server
+
+**In this basic version**, we get a simple understanding of react ssr/hybrid: The server needs to return the same html as the client's initial rendering, otherwise mismatch error will throw. Client hydration is acomplished by server html inject the `bundle.js` of our whole react app, upon loading of the js, hydration will happen in the client, only after this process, our application will become hydrated and interactive.
 
 We can try to improve this by using v18 streaming and Suspense.
 
-> Streaming: In HTTP streaming, data is sent as a continuous stream, allowing the client to start processing data as soon as it is received, without waiting for the entire payload to be transferred. This enables low-latency delivery and real-time interaction.
+> Streaming: In HTTP streaming, data is sent as a continuous stream, allowing the client to start processing data as soon as it is received, without waiting for the entire react application to be transferred. This enables low-latency delivery and real-time interaction.
 
-### Advanced
+### Advanced SSR with `renderToPipeableStream`
 
 (https://github.com/reactwg/react-18/discussions/37)
 
-Things we want to add:
-
-- Add more components with `Suspense` or `lazy`
-  - Selective Hydration
-- Use react-query for data-fetching
-- Test if initial bundle is splited
-- ~~Test if Suspense is streamed partially as expected and check the partial returned data(with js to hydrate this part of UI? From the doc, this is no, client js bundles can be splited by `lazy`)~~
-
-  - The above is incorrect: streaming is an http protocol, namely only a single connection with the server, but data is sent continuously in a stream instead of in discrete packets.
-  - In our example, if you visit ssr rendered `localhost:3006/article` page, you can see in network the document request is streaming in action, the request timeline actually lasts as long as our api returns, but the initial html is returned and rendered instantly. Here is the returned html that react can handle with it's suspense:
-
-  ```html
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta name="theme-color" content="#000000" />
-      <title>React App</title>
-    </head>
-    <body>
-      <div class="App">
-        <div>
-          <nav>
-            <ul>
-              <li>
-                <a href="/">Home</a>
-              </li>
-              <li>
-                <a href="/user">User</a>
-              </li>
-              <li>
-                <a href="/article">Article</a>
-              </li>
-              <li>
-                <a href="/nothing-here">Nothing Here</a>
-              </li>
-            </ul>
-          </nav>
-          <hr />
-          <!--$-->
-          <div style="border:1px dashed gray">
-            <h1>This is an article page</h1>
-            <!--$?-->
-            <template id="B:0"></template>
-            <div style="color:red">Loading...</div>
-            <!--/$-->
-          </div>
-          <!--/$-->
-        </div>
-      </div>
-    </body>
-  </html>
-  <script src="/static/bundle.js" async=""></script>
-  <div hidden id="S:0">
-    <div>
-      <p>On this beautiful day in HangZhou</p>
-      <!--$-->
-      <p>
-        The sun rises at
-        <!-- -->
-        5:45:47 AM
-      </p>
-      <p>
-        And sets at
-        <!-- -->
-        6:19:57 PM
-      </p>
-      <!--/$-->
-    </div>
-  </div>
-  <script>
-    function $RC(a, b) {
-      a = document.getElementById(a);
-      b = document.getElementById(b);
-      b.parentNode.removeChild(b);
-      if (a) {
-        a = a.previousSibling;
-        var f = a.parentNode,
-          c = a.nextSibling,
-          e = 0;
-        do {
-          if (c && 8 === c.nodeType) {
-            var d = c.data;
-            if ('/$' === d)
-              if (0 === e) break;
-              else e--;
-            else ('$' !== d && '$?' !== d && '$!' !== d) || e++;
-          }
-          d = c.nextSibling;
-          f.removeChild(c);
-          c = d;
-        } while (c);
-        for (; b.firstChild; ) f.insertBefore(b.firstChild, c);
-        a.data = '$';
-        a._reactRetry && a._reactRetry();
-      }
-    }
-    $RC('B:0', 'S:0');
-  </script>
-  ```
-
-  Interestingly, we can see the initial html only has our `fallback` loading content, along with a `template` indicating our suspense boundary, but later as the server finishes Suspense, another partial chunk is streamed, react will then replace our loading content with this newly rendered content.
-
-  > At this point, actually our ssr is not perfect, you will see that even if our server has called api and got the data, once upon client hydration, the client will still send out api requests. This is not good at all.
-
-  The jsx of this page:
-
-  ```jsx
-  <div style={{ border: '1px dashed gray' }}>
-    <h1>This is an article page</h1>
-    <Suspense fallback={<Loading />}>
-      <Sunrise />
-    </Suspense>
-  </div>
-  ```
+#### Tests to run
 
 - Test when Suspense failed ssr, how does csr kick in?
 - Use `renderToPipableStream` api
   - How to make api calls happen in server only?
-    > This is completed, let's explain in details at below🔽. The implementation is in `ReactQueryStreamedHydration`
+    > This is complicated, let's explain in details at below🔽. The implementation is in `ReactQueryStreamedHydration`
   - Why the returned html seems been cached after the first visit?
     > Probably cached by `react-query`!
 - If a hydration content mis-match error happens, the app will fallback to csr, meaning in this case, the whole csr bundle.js will take control and generate the DOM and event handlers totally.(The server can return absolutely different html than the client to test)
@@ -206,7 +122,125 @@ Things we want to add:
   - The second test: cause a mis-match inside a `Suspense`. Normally I think this kind of mismatch is caused by explicitly control different behiver by using ENV variables such as `_SERVER_RENDER_ ? <A /> : <B />`. In our example, we can first build csr bundle.js then modify a component and then only build the server bundle to cause this mismatch. For example, I add an `extra static string` in our `Sunrise` component, since this component has a delayed api call, will only finish rendering after the delay, the `extra static string` will be returned and rendered initially, but after suspense resolved, the mismatch happens, then revert to csr, causing the `extra static string` to disapper.
     > Uncaught Error: There was an error while hydrating this Suspense boundary. Switched to client rendering.
 
-# Take aways
+#### Things we want to add
+
+- Add more components with `Suspense` or `lazy`
+  - Selective Hydration
+- Use react-query for data-fetching, which is said to support Suspense boundary
+- Test if initial bundle is splited?
+- ~~Test if Suspense is streamed partially as expected and check the partial returned data(with js to hydrate this part of UI? From the doc, this is no, client js bundles can be splited by `lazy`)~~
+
+  - The above is incorrect: streaming is an http protocol, namely only a single connection with the server, but data is sent continuously in a stream instead of in discrete packets. And client will process whatever it gets so far from server.
+  - In our example, if you visit ssr rendered `localhost:3006/article` page, you can see in network the document request is streaming in action, the request timeline actually lasts as long as our api returns, but the initial html is returned and rendered instantly, also hydrated selectively. Here is the returned html that react can handle with it's suspense:
+
+#### Before we add `ReactQueryStreamedHydration`
+
+This will be the final ssr html returned for `/article` page, but keep in mind that this html conent is not generated and returned in a single tick, it's actually lasts for 5 seconds, but since we are using streaming, this is a single http connection, and the client is rendered and hydrated gradually as the data chunks arrives, not blocking the UI interactivity.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>React App</title>
+  </head>
+  <body>
+    <div class="App">
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <a href="/">Home</a>
+            </li>
+            <li>
+              <a href="/user">User</a>
+            </li>
+            <li>
+              <a href="/article">Article</a>
+            </li>
+            <li>
+              <a href="/nothing-here">Nothing Here</a>
+            </li>
+          </ul>
+        </nav>
+        <hr />
+        <!--$-->
+        <div style="border:1px dashed gray">
+          <h1>This is an article page</h1>
+          <!--$?-->
+          <template id="B:0"></template>
+          <div style="color:red">Loading...</div>
+          <!--/$-->
+        </div>
+        <!--/$-->
+      </div>
+    </div>
+  </body>
+</html>
+<script src="/static/bundle.js" async=""></script>
+<div hidden id="S:0">
+  <div>
+    <p>On this beautiful day in HangZhou</p>
+    <!--$-->
+    <p>
+      The sun rises at
+      <!-- -->
+      5:45:47 AM
+    </p>
+    <p>
+      And sets at
+      <!-- -->
+      6:19:57 PM
+    </p>
+    <!--/$-->
+  </div>
+</div>
+<script>
+  function $RC(a, b) {
+    a = document.getElementById(a);
+    b = document.getElementById(b);
+    b.parentNode.removeChild(b);
+    if (a) {
+      a = a.previousSibling;
+      var f = a.parentNode,
+        c = a.nextSibling,
+        e = 0;
+      do {
+        if (c && 8 === c.nodeType) {
+          var d = c.data;
+          if ('/$' === d)
+            if (0 === e) break;
+            else e--;
+          else ('$' !== d && '$?' !== d && '$!' !== d) || e++;
+        }
+        d = c.nextSibling;
+        f.removeChild(c);
+        c = d;
+      } while (c);
+      for (; b.firstChild; ) f.insertBefore(b.firstChild, c);
+      a.data = '$';
+      a._reactRetry && a._reactRetry();
+    }
+  }
+  $RC('B:0', 'S:0');
+</script>
+```
+
+Interestingly, we can see the initial html only has our `fallback` loading content, along with a `template` indicating our suspense boundary, but later as the server finishes Suspense, another partial chunk is streamed, react will then replace our loading content with this newly rendered content and at the same time do hydration of the part.
+
+**[Duplication] APIs are called on both server and client**
+
+At this point, actually our ssr is not perfect, you will see that even if our server has called api and got the data(our html even already has got the data injected in some way), once upon client hydration, the client will still send out api requests. Why?
+
+**Reason**
+
+The protocol is query SDK wise, react itself currently doesn't care about this, it only takes care of server concurrent rendering and streaming. So in server we have used react-query client to call api and get data, we need some protocol to let react-query client in the client-side to know the data has been retrieved and no need to call again on client-side. This protocol is done in our `ReactQueryStreamedHydration` lib.
+
+Refer to [How to avoid client re-calling APIs for SSR?]() below to understand the implementation.
+
+# Other take-aways
 
 ## URLs(traditional vs hash)
 
