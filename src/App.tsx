@@ -1,12 +1,16 @@
 import * as React from 'react';
 import { Routes, Route, Outlet, Link } from 'react-router-dom';
-import Home from './Home';
-import User from './User';
-import Article from './Article';
+// import Home from './Home';
+// import User from './User';
+// import Article from './Article';
 import Loading from './components/Loading';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryStreamedHydration } from './components/ReactQueryStreamedHydration';
 
+// lazy load and code-splitting
+const Home = React.lazy(() => import('./Home'));
+const User = React.lazy(() => import('./User'));
+const Article = React.lazy(() => import('./Article'));
 function App() {
   // Instead do this, which ensures each request has its own cache:
   const [queryClient] = React.useState(
@@ -68,7 +72,9 @@ function Layout() {
       {/* An <Outlet> renders whatever child route is currently active,
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
-      <React.Suspense fallback={<Loading color='yellow' />}>
+      <React.Suspense
+        fallback={<Loading color='yellow' text='Router Loading' />}
+      >
         <Outlet />
       </React.Suspense>
     </div>

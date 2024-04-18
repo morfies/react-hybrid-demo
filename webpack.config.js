@@ -11,17 +11,18 @@ module.exports = {
   plugins: [new HtmlWebpackPlugin()],
   module: {
     rules: [
+      // {
+      //   test: /\.tsx?$/,
+      //   use: 'ts-loader',
+      //   exclude: /node_modules/,
+      // },
+      // https://stackoverflow.com/questions/38320220/how-to-setup-typescript-babel-webpack
       {
-        test: /\.(js|jsx)$/,
+        test: /\.(js|jsx|tsx|ts)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
         },
-      },
-      {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
       },
     ],
   },

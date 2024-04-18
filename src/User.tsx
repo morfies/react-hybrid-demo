@@ -31,7 +31,9 @@ function User() {
   return (
     <div style={{ border: '1px dashed gray' }}>
       <p>This is a profile of some user</p>
-      <Suspense fallback={<Loading color='purple' />}>
+      <Suspense
+        fallback={<Loading color='purple' text='User component loading' />}
+      >
         <UserInfo />
       </Suspense>
     </div>

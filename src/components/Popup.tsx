@@ -13,7 +13,7 @@ export default function ({ show }: { show: boolean }) {
   return (
     <div style={{ display: show ? 'block' : 'none' }}>
       <h2>A popup with Suspense boundary(Selective hydration)</h2>
-      <React.Suspense fallback={<Loading color='blue' />}>
+      <React.Suspense fallback={<Loading color='blue' text='Image loading' />}>
         <img src={data.image} alt='a fox'></img>
       </React.Suspense>
     </div>
