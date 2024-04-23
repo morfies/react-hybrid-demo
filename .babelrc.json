@@ -4,5 +4,9 @@
     ["@babel/preset-react", {"runtime": "automatic"}],
     ["@babel/preset-typescript", { "allowDeclareFields": true }]
   ],
-  "plugins": [["./plugin", {"name":"ok"}]]
+  "env":{
+    "hybrid_rendering":{
+      "plugins": [["./plugin.mjs", {"enable":true}]]
+    }
+  }
 }

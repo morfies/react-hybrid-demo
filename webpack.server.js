@@ -16,14 +16,8 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
-        // for server side, we only need babel-loader to transpile jsx to plain js
+        test: /\.(js|jsx|tsx|ts)$/,
         use: 'babel-loader',
-      },
-      {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
       },
     ],
   },

@@ -562,3 +562,10 @@ What all the Providers and components are doing here mainly are binding event li
 ## Other Learning docs
 
 - https://blog.logrocket.com/data-fetching-react-suspense
+
+# Babel custom plugin
+
+- a simple example of jsx cache: https://github.com/jsx-plus/babel-plugin-transform-jsx-memo/tree/master
+- https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/README.md
+
+Babel plugins basically traverse the AST tree of your program, so if you are writing a plugin and want to know details of the data structures, it's a good reference to see the AST results in action: https://astexplorer.net/
